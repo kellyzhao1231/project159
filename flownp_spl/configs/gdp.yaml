@@ -1,0 +1,31 @@
+# FlowNP — GDP ocean drifters (unit sphere xyz, irregular 3D spatial data)
+# 64-220 drifter observations, 3 features: ve, vn, sst
+
+data_path: /home/zross/proj/spl/datasets/gdp_irregular_xyz.npz
+dataset_name: gdp
+
+x_dim: 3
+y_dim: 3
+
+# Model architecture
+dim_posenc: 80
+d_model: 64
+emb_depth: 4
+dim_feedforward: 128
+nhead: 4
+dropout: 0.0
+num_layers: 6
+timesteps: 100
+
+# Training
+batch_size: 16
+learning_rate: 5.0e-4
+weight_decay: 0.0
+epochs: 100
+
+# Data splits
+context_frac_range: [0.1, 0.5]
+eval_context_frac: 0.3
+num_workers: 4
+eval_interval: 10
+eval_num_samples: 20
