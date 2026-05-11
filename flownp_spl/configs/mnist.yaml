@@ -1,0 +1,32 @@
+# FlowNP — MNIST (28x28 grayscale images as 2D spatial tasks)
+
+dataset_type: image
+image_dataset: MNIST
+data_root: ./data
+dataset_name: mnist
+
+x_dim: 2
+y_dim: 1
+
+# Model architecture
+dim_posenc: 20
+d_model: 64
+emb_depth: 4
+dim_feedforward: 128
+nhead: 4
+dropout: 0.0
+num_layers: 6
+timesteps: 100
+
+# Training
+batch_size: 64
+learning_rate: 5.0e-4
+weight_decay: 0.0
+epochs: 50
+
+# Data splits — 1-50% of 784 pixels as context (8-392 pixels)
+context_frac_range: [0.01, 0.5]
+eval_context_frac: 0.1
+num_workers: 4
+eval_interval: 5
+eval_num_samples: 20

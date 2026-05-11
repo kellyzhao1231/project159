@@ -1,8 +1,10 @@
-"""Train FlowNP on irregular spatial datasets (PeakWeather / GDP).
+"""Train FlowNP on spatial, GP, or image datasets.
 
 Usage:
     python train.py --config configs/weather.yaml [--device cuda:0]
     python train.py --config configs/gdp.yaml     [--device cuda:1]
+    python train.py --config configs/mnist.yaml    [--device cpu]
+    python train.py --config configs/gp_rbf.yaml   [--device cpu]
 """
 
 from __future__ import annotations
@@ -17,7 +19,12 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from data import SpatialDataset, spatial_collate
+from data import (
+    GPSyntheticDataset,
+    ImageDataset,
+    SpatialDataset,
+    spatial_collate,
+)
 from model import FlowNP
 
 
@@ -29,6 +36,86 @@ def _to_device(batch: dict, device: torch.device) -> dict:
         k: v.to(device) if isinstance(v, torch.Tensor) else v
         for k, v in batch.items()
     }
+
+
+def _build_datasets(cfg: dict) -> tuple:
+    """Build (train_ds, test_ds) based on ``cfg["dataset_type"]``.
+
+    Returns:
+        ``(train_dataset, test_dataset)``
+    """
+    dtype = cfg.get("dataset_type", "spatial")
+
+    if dtype == "spatial":
+        print(f"Loading {cfg['data_path']} …")
+        data = np.load(cfg["data_path"], allow_pickle=True)
+        train_ds = SpatialDataset(
+            data["x_train"], data["pos_train"],
+            context_frac_range=tuple(cfg["context_frac_range"]),
+        )
+        test_ds = SpatialDataset(
+            data["x_test"], data["pos_test"],
+            context_frac_range=(cfg["eval_context_frac"], cfg["eval_context_frac"]),
+            deterministic=True,
+        )
+
+    elif dtype == "gp":
+        train_ds = GPSyntheticDataset(
+            kernel_name=cfg["kernel"],
+            epoch_size=cfg.get("epoch_size", 10000),
+            max_num_points=cfg.get("max_num_points", 50),
+            x_range=tuple(cfg.get("x_range", [-2, 2])),
+            context_frac_range=tuple(cfg["context_frac_range"]),
+        )
+        test_ds = GPSyntheticDataset(
+            kernel_name=cfg["kernel"],
+            epoch_size=cfg.get("eval_epoch_size", 1000),
+            max_num_points=cfg.get("max_num_points", 50),
+            x_range=tuple(cfg.get("x_range", [-2, 2])),
+            context_frac_range=(cfg["eval_context_frac"], cfg["eval_context_frac"]),
+        )
+
+    elif dtype == "image":
+        import torchvision
+        import torchvision.transforms as T
+
+        transform = T.ToTensor()  # -> (C, H, W) in [0, 1]
+        ds_name = cfg["image_dataset"]
+        data_root = cfg.get("data_root", "./data")
+
+        if ds_name == "MNIST":
+            tv_train = torchvision.datasets.MNIST(
+                data_root, train=True, download=True, transform=transform,
+            )
+            tv_test = torchvision.datasets.MNIST(
+                data_root, train=False, download=True, transform=transform,
+            )
+        elif ds_name == "CelebA":
+            tv_train = torchvision.datasets.CelebA(
+                data_root, split="train", download=False,
+                transform=T.Compose([T.CenterCrop(148), T.Resize(32), T.ToTensor()]),
+            )
+            tv_test = torchvision.datasets.CelebA(
+                data_root, split="test", download=False,
+                transform=T.Compose([T.CenterCrop(148), T.Resize(32), T.ToTensor()]),
+            )
+        else:
+            raise ValueError(f"Unknown image_dataset: {ds_name!r}")
+
+        train_ds = ImageDataset(
+            tv_train,
+            context_frac_range=tuple(cfg["context_frac_range"]),
+        )
+        test_ds = ImageDataset(
+            tv_test,
+            context_frac_range=(cfg["eval_context_frac"], cfg["eval_context_frac"]),
+            deterministic=True,
+        )
+
+    else:
+        raise ValueError(f"Unknown dataset_type: {dtype!r}")
+
+    return train_ds, test_ds
 
 
 # ── training / evaluation loops ─────────────────────────────────────
@@ -141,18 +228,7 @@ def main() -> None:
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # ── data ──────────────────────────────────────────────────────
-    print(f"Loading {cfg['data_path']} …")
-    data = np.load(cfg["data_path"], allow_pickle=True)
-
-    train_ds = SpatialDataset(
-        data["x_train"], data["pos_train"],
-        context_frac_range=tuple(cfg["context_frac_range"]),
-    )
-    test_ds = SpatialDataset(
-        data["x_test"], data["pos_test"],
-        context_frac_range=(cfg["eval_context_frac"], cfg["eval_context_frac"]),
-        deterministic=True,
-    )
+    train_ds, test_ds = _build_datasets(cfg)
 
     train_loader = DataLoader(
         train_ds, batch_size=cfg["batch_size"], shuffle=True,
