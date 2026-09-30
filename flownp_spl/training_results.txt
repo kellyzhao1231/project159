@@ -1,0 +1,82 @@
+FlowNP MNIST Training Results
+==============================
+
+Model: FlowNP (Flow Matching Neural Processes)
+Dataset: MNIST (28x28 grayscale images as 2D spatial prediction tasks)
+Device: CPU (Apple M3)
+Model Parameters: 0.23M
+Branch: add-mnist-gp-datasets
+
+Training Configuration
+----------------------
+Epochs: 50
+Batch Size: 64
+Learning Rate: 5e-4 (cosine annealing)
+Optimizer: Adam
+Train Samples: 60,000
+Test Samples: 10,000
+
+Final Results
+-------------
+Final Train Loss: 0.0386
+Final Test Loss (CFM): 0.0458
+Best Test Loss: 0.0458 (epoch 50)
+
+Loss Per Epoch
+--------------
+Epoch    Train Loss    Test Loss     LR
+-----    ----------    ---------     --
+  1       0.3054          -         5.00e-04
+  2       0.1882          -         4.98e-04
+  3       0.0933          -         4.96e-04
+  4       0.0698          -         4.92e-04
+  5       0.0654        0.0737      4.88e-04
+  6       0.0604          -         4.82e-04
+  7       0.0569          -         4.76e-04
+  8       0.0543          -         4.69e-04
+  9       0.0528          -         4.61e-04
+ 10       0.0513        0.0592      4.52e-04
+ 11       0.0500          -         4.43e-04
+ 12       0.0487          -         4.32e-04
+ 13       0.0479          -         4.21e-04
+ 14       0.0471          -         4.09e-04
+ 15       0.0462        0.0545      3.97e-04
+ 16       0.0457          -         3.84e-04
+ 17       0.0453          -         3.70e-04
+ 18       0.0447          -         3.56e-04
+ 19       0.0442          -         3.42e-04
+ 20       0.0438          -         3.27e-04
+ 21       0.0434          -         3.12e-04
+ 22       0.0431          -         2.97e-04
+ 23       0.0428          -         2.81e-04
+ 24       0.0425          -         2.66e-04
+ 25       0.0422        0.0496      2.50e-04
+ 26       0.0418          -         2.34e-04
+ 27       0.0416          -         2.19e-04
+ 28       0.0414          -         2.03e-04
+ 29       0.0413          -         1.88e-04
+ 30       0.0409        0.0481      1.73e-04
+ 31       0.0408          -         1.58e-04
+ 32       0.0405          -         1.44e-04
+ 33       0.0404          -         1.30e-04
+ 34       0.0402          -         1.16e-04
+ 35       0.0401        0.0471      1.03e-04
+ 36       0.0398          -         9.06e-05
+ 37       0.0398          -         7.89e-05
+ 38       0.0395          -         6.78e-05
+ 39       0.0393          -         5.74e-05
+ 40       0.0393        0.0464      4.77e-05
+ 41       0.0392          -         3.89e-05
+ 42       0.0390          -         3.09e-05
+ 43       0.0389          -         2.38e-05
+ 44       0.0388          -         1.76e-05
+ 45       0.0389        0.0460      1.22e-05
+ 46       0.0388          -         7.85e-06
+ 47       0.0387          -         4.43e-06
+ 48       0.0386          -         1.97e-06
+ 49       0.0385          -         4.93e-07
+ 50       0.0386        0.0458      0.00e+00
+
+Test loss evaluated every 5 epochs. New best test loss achieved at every evaluation.
+
+Checkpoint: checkpoints/mnist/best_model.pt
